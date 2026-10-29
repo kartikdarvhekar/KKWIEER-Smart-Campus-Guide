@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Official Indoor Campus Navigation Web App for the Main Building of K. K. Wagh Institute of Engineering Education and Research (KKWIEER), Nashik. Turn-by-turn indoor routing, voice assistance, and multi-floor room directory.">
+  <meta name="theme-color" content="#800020">
+  <title>KKWIEER Smart Campus Guide</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans for modern clarity & Outfit for headers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-emblem" aria-hidden="true">
+          <img src="assets/kkwieer_emblem.jpg" alt="KKWIEER Emblem" class="brand-emblem-img">
+        </div>
+        <div class="brand-titles">
+          <div class="brand-super">K. K. Wagh Institute (KKWIEER), Nashik</div>
+          <h1 class="brand-title">KKWIEER Smart Campus Guide</h1>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button id="btn-validation-report" class="btn-ghost" title="Route Data Validation Report" aria-label="Route Data Validation Report">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          <span class="btn-text-desktop">Route Audit (29 Routes)</span>
+        </button>
+        <button id="btn-quick-guide" class="btn-ghost" title="Campus Layout & Wing Orientation" aria-label="Campus Wing Orientation Guide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span class="btn-text-desktop">Wing Guide</span>
+        </button>
+        <button id="btn-voice-toggle" class="btn-voice-header" title="Toggle Voice Readout" aria-label="Toggle Voice Readout">
+          <span class="voice-wave-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span id="voice-header-label">Voice On</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="app-main">
+    <div class="app-layout">
+      
+      <!-- Left Column / Primary Navigation Panel -->
+      <section class="nav-control-panel">
+        
+        <!-- Route Input Box -->
+        <div class="route-box-card">
+          <div class="route-inputs-container">
+            <div class="route-points-visual">
+              <span class="point-origin-dot" title="Current Position"></span>
+              <span class="route-connecting-line"></span>
+              <span class="point-dest-pin" title="Destination">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+              </span>
+            </div>
+
+            <div class="inputs-stack">
+              <!-- Origin / Current Position Input Group -->
+              <div class="input-field-group">
+                <label for="input-origin" class="field-label">CURRENT POSITION</label>
+                <div class="input-with-action">
+                  <input 
+                    type="text" 
+                    id="input-origin" 
+                    class="nav-input" 
+                    placeholder="Enter current position..." 
+                    autocomplete="off"
+                    value="Main Entrance Porch (Ground Floor - You Are Here)"
+                    data-node-id="MAIN-ENT"
+                  >
+                  <button id="btn-clear-origin" class="btn-clear-input" aria-label="Clear current position" title="Clear">✕</button>
+                </div>
+                <div id="origin-suggestions" class="autocomplete-dropdown hidden"></div>
+              </div>
+
+              <!-- Destination Input Group -->
+              <div class="input-field-group">
+                <label for="input-dest" class="field-label">DESTINATION</label>
+                <div class="input-with-action">
+                  <input 
+                    type="text" 
+                    id="input-dest" 
+                    class="nav-input" 
+                    placeholder="Search classroom, lab, E401, E402, E403, E406..." 
+                    autocomplete="off"
+                  >
+                  <button id="btn-clear-dest" class="btn-clear-input" aria-label="Clear destination" title="Clear">✕</button>
+                </div>
+                <div id="dest-suggestions" class="autocomplete-dropdown hidden"></div>
+              </div>
+            </div>
+
+            <!-- Swap Button -->
+            <button id="btn-swap-locations" class="btn-swap" title="Swap Current Position and Destination" aria-label="Swap Current Position and Destination">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Primary Navigation Action Buttons -->
+          <div class="route-action-buttons">
+            <button id="btn-find-route" class="btn-find-route" title="Find Route">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Find Route</span>
+            </button>
+            <button id="btn-clear-route" class="btn-clear-route" title="Clear Route and Inputs">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Clear Route</span>
+            </button>
+          </div>
+
+          <!-- Clean Quick Destination Selector -->
+          <div class="quick-dest-wrapper">
+            <span class="quick-dest-label">Quick Select:</span>
+            <div class="quick-dest-pills">
+              <button class="quick-dest-btn" data-dest-id="E101">E101</button>
+              <button class="quick-dest-btn" data-dest-id="E102">E102</button>
+              <button class="quick-dest-btn" data-dest-id="E201">E201</button>
+              <button class="quick-dest-btn" data-dest-id="E301">E301</button>
+              <button class="quick-dest-btn" data-dest-id="E401">E401</button>
+              <button class="quick-dest-btn" data-dest-id="E402">E402</button>
+              <button class="quick-dest-btn" data-dest-id="E403" data-variant="1">E403 (R1)</button>
+              <button class="quick-dest-btn" data-dest-id="E403" data-variant="2">E403 (R2)</button>
+              <button class="quick-dest-btn" data-dest-id="E406">E406</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Summary & Live State Card -->
+        <div id="route-summary-card" class="route-summary-card hidden">
+          <!-- Route Variant Selector for Multi-Route Destinations (e.g. E403 Route 1 vs Route 2) -->
+          <div id="route-variant-bar" class="route-variant-bar hidden"></div>
+
+          <div class="summary-top-row">
+            <div class="metrics-cluster">
+              <div class="metric-pill metric-time">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="metric-duration">-- min</span>
+              </div>
+              <div class="metric-pill metric-distance">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                <span id="metric-distance-text">-- m</span>
+              </div>
+              <div class="metric-pill metric-floors" id="pill-floor-transition">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 20h4v-4h4v-4h4V8h4V4"></path>
+                </svg>
+                <span id="metric-floor-text">Same Floor</span>
+              </div>
+            </div>
+            
+            <div class="summary-actions">
+              <button id="btn-read-aloud" class="btn-action-round" title="Read All Steps Aloud" aria-label="Read All Steps Aloud">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              </button>
+              <button id="btn-share-route" class="btn-action-round" title="Share / Copy Route" aria-label="Share Route">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step Progression Navigator -->
+          <div class="step-progress-bar-container">
+            <div class="progress-info">
+              <span id="step-counter-text">Step 1 of --</span>
+              <span id="active-wing-indicator" class="wing-badge-mini">Wing E</span>
+            </div>
+            <div class="progress-track">
+              <div id="step-progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Step Navigation Controls -->
+          <div class="step-controls-bar">
+            <button id="btn-prev-step" class="btn-step-nav" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Previous Step
+            </button>
+            <button id="btn-voice-current-step" class="btn-step-speak" title="Speak this step">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              Speak Step
+            </button>
+            <button id="btn-next-step" class="btn-step-nav">
+              Next Step
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Turn-By-Turn Direction Cards Container -->
+        <div id="navigation-steps-container" class="steps-scroll-area">
+          <div class="empty-state-card" id="empty-state-intro">
+            <div class="empty-icon-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+              </svg>
+            </div>
+            <h3>Ready to Navigate</h3>
+            <p>Select your destination above or click Find Route to load the verified indoor path on the interactive floor map.</p>
+            <div class="preset-pill-group">
+              <span class="preset-label">Verified Route Direct Stops:</span>
+              <button class="preset-tag" data-dest-id="E101">🎯 E101 (R1)</button>
+              <button class="preset-tag" data-dest-id="E102">🎯 E102 (R2)</button>
+              <button class="preset-tag" data-dest-id="E103-I">🎯 E103-I (R3)</button>
+              <button class="preset-tag" data-dest-id="E201">🎯 E201 (R9)</button>
+              <button class="preset-tag" data-dest-id="E301">🎯 E301 (R17)</button>
+              <button class="quick-dest-btn preset-tag" data-dest-id="E401">🎯 E401 (R25)</button>
+              <button class="quick-dest-btn preset-tag" data-dest-id="E402">🎯 E402 (R26)</button>
+              <button class="quick-dest-btn preset-tag" data-dest-id="E403" data-variant="1">🎯 E403 R1 (R27)</button>
+              <button class="quick-dest-btn preset-tag" data-dest-id="E403" data-variant="2">🎯 E403 R2 (R29)</button>
+              <button class="quick-dest-btn preset-tag" data-dest-id="E406">🎯 E406 (R28)</button>
+            </div>
+          </div>
+
+          <div id="turn-cards-list" class="turn-cards-list hidden">
+            <!-- Dynamically populated turn cards -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column / Floor Explorer & Map -->
+      <section class="explorer-panel">
+        
+        <!-- Floor Tabs Header -->
+        <div class="explorer-header-card">
+          <div class="explorer-title-row">
+            <div>
+              <h2 class="section-title">Campus Floor Map & Directory</h2>
+              <p class="section-subtitle">Visual building layout with highlighted route & room directory</p>
+            </div>
+            <div class="view-mode-toggle">
+              <button id="view-mode-map" class="mode-tab-btn active" title="Interactive Floor Map View">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                  <line x1="8" y1="2" x2="8" y2="18"></line>
+                  <line x1="16" y1="6" x2="16" y2="22"></line>
+                </svg>
+                Floor Map
+              </button>
+              <button id="view-mode-directory" class="mode-tab-btn" title="Directory View">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Directory
+              </button>
+            </div>
+          </div>
+
+          <!-- Floor Selector Pills -->
+          <div class="floor-selector-bar" id="floor-pills">
+            <button class="floor-pill active" data-floor="G">
+              <span class="floor-badge">G</span>
+              <span class="floor-text">Level G (Ground)</span>
+            </button>
+            <button class="floor-pill" data-floor="1">
+              <span class="floor-badge">1</span>
+              <span class="floor-text">Level 1 (First)</span>
+            </button>
+            <button class="floor-pill" data-floor="2">
+              <span class="floor-badge">2</span>
+              <span class="floor-text">Level 2 (Second)</span>
+            </button>
+            <button class="floor-pill" data-floor="3">
+              <span class="floor-badge">3</span>
+              <span class="floor-text">Level 3 (Third)</span>
+            </button>
+            <button class="floor-pill" data-floor="4">
+              <span class="floor-badge">4</span>
+              <span class="floor-text">Level 4 (Fourth)</span>
+            </button>
+          </div>
+
+          <!-- Floor Summary Banner -->
+          <div id="floor-summary-banner" class="floor-summary-banner">
+            <!-- Dynamic Floor Highlights (e.g. Electrical Engg, Chemical, etc.) -->
+          </div>
+
+          <!-- Directory Filter Bar -->
+          <div class="directory-filter-row" id="directory-filter-bar">
+            <div class="directory-search-wrapper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="directory-filter-input" placeholder="Filter this floor's rooms..." autocomplete="off">
+              <button id="btn-clear-dir-filter" class="btn-clear-filter hidden">✕</button>
+            </div>
+            <div class="wing-filter-pills" id="wing-filter-pills">
+              <button class="wing-pill active" data-wing="ALL">All Wings</button>
+              <button class="wing-pill" data-wing="CENTRAL">Central</button>
+              <button class="wing-pill" data-wing="A">Wing A</button>
+              <button class="wing-pill" data-wing="B">Wing B</button>
+              <button class="wing-pill" data-wing="D">Wing D</button>
+              <button class="wing-pill" data-wing="E">Wing E</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Floor Map View (Default Active View) -->
+        <div id="interactive-map-area" class="map-view-container">
+          <div id="floor-map-container"></div>
+        </div>
+
+        <!-- Directory Cards View -->
+        <div id="directory-content-area" class="directory-cards-container hidden">
+          <div id="directory-room-grid" class="rooms-grid">
+            <!-- Dynamic room cards -->
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Wing Orientation & Campus Guide Modal -->
+  <div id="guide-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-guide-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <img src="assets/kkwieer_emblem.jpg" alt="KKWIEER Emblem" class="modal-emblem-img">
+        </div>
+        <div class="modal-title-stack">
+          <h3 id="modal-guide-title">KKWIEER Main Building Architecture</h3>
+          <p>Campus Wings, Departments & Staircase Locations</p>
+        </div>
+        <button id="btn-close-modal" class="btn-modal-close" aria-label="Close Guide">✕</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Orientation Cards -->
+        <div class="guide-grid">
+          
+          <div class="guide-card wing-card-spine">
+            <div class="guide-card-header">
+              <span class="guide-badge">Ground Floor</span>
+              <h4>Central Administrative Spine</h4>
+            </div>
+            <p class="guide-desc">The main artery extending North from the Main Entrance Porch.</p>
+            <ul class="guide-list">
+              <li><strong>Facilities:</strong> Main Entrance Porch, Accounts Office, Cashier Cabin, Principal's Office, Staff Office, Board Room, Central Seminar Hall.</li>
+              <li><strong>Intersection:</strong> Leads directly to Central Foyer Crossway.</li>
+            </ul>
+          </div>
+
+          <div class="guide-card wing-card-library">
+            <div class="guide-card-header">
+              <span class="guide-badge">East Center</span>
+              <h4>Central Library & T&P Hub</h4>
+            </div>
+            <p class="guide-desc">Distinctive hexagonal structure adjacent to the Central Foyer.</p>
+            <ul class="guide-list">
+              <li><strong>Facilities:</strong> Central Reading Hall, Reference Section, Book Stack, Digital Library, and Training & Placement (T&P) Office.</li>
+            </ul>
+          </div>
+
+          <div class="guide-card wing-card-a">
+            <div class="guide-card-header">
+              <span class="guide-badge">North-West</span>
+              <h4>Wing A</h4>
+            </div>
+            <p class="guide-desc">Stairs: Inner Staircase (off Foyer) & Outer Staircase (far corner).</p>
+            <ul class="guide-list">
+              <li><strong>Level G & 1:</strong> Electrical Engineering</li>
+              <li><strong>Level 2 & 3:</strong> E&TC Engineering</li>
+              <li><strong>Level 4:</strong> PG Section / FE Classrooms</li>
+            </ul>
+          </div>
+
+          <div class="guide-card wing-card-b">
+            <div class="guide-card-header">
+              <span class="guide-badge">North-East</span>
+              <h4>Wing B</h4>
+            </div>
+            <p class="guide-desc">Stairs: Inner Staircase (off Foyer) & Outer Staircase (far corner).</p>
+            <ul class="guide-list">
+              <li><strong>Level G & 1:</strong> Chemical Engineering</li>
+              <li><strong>Level 2:</strong> Information Technology (IT)</li>
+              <li><strong>Level 3:</strong> Artificial Intelligence & Data Science (AI & DS)</li>
+              <li><strong>Level 4:</strong> MBA Department</li>
+            </ul>
+          </div>
+
+          <div class="guide-card wing-card-d">
+            <div class="guide-card-header">
+              <span class="guide-badge">South-East</span>
+              <h4>Wing D</h4>
+            </div>
+            <p class="guide-desc">Stairs: Inner Staircase (off Foyer) & Outer Staircase (far corner).</p>
+            <ul class="guide-list">
+              <li><strong>Level G & 1:</strong> Civil Engineering</li>
+              <li><strong>Level 2 & 3:</strong> Robotics & Automation (R&A)</li>
+              <li><strong>Level 4:</strong> MCA Department</li>
+            </ul>
+          </div>
+
+          <div class="guide-card wing-card-e">
+            <div class="guide-card-header">
+              <span class="guide-badge">South-West</span>
+              <h4>Wing E</h4>
+            </div>
+            <p class="guide-desc">Stairs: Inner Staircase (off Foyer) & Outer Staircase (far corner).</p>
+            <ul class="guide-list">
+              <li><strong>Level G & 1:</strong> Mechanical Engineering</li>
+              <li><strong>Level 2 & 3:</strong> Computer Engineering</li>
+              <li><strong>Level 4:</strong> Computer Science & Design (CSD)</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="guide-footer-note">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span><strong>Room Numbering Rule:</strong> 100-series = Level G (Ground), 200-series = Level 1, 300-series = Level 2, 400-series = Level 3, 500-series = Level 4.</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Route Data Validation Modal (PART C Requirements) -->
+  <div id="validation-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-validation-title">
+    <div class="modal-container" style="max-width: 780px;">
+      <div class="modal-header">
+        <div class="modal-header-icon" style="background: #800020; color: #ffffff; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; font-weight: 800;">
+          ✓
+        </div>
+        <div class="modal-header-text">
+          <h3 id="modal-validation-title">KKWIEER Campus Navigation — Route Data Validation Report</h3>
+          <p>26 Verified Routes Configuration Audit & Discrepancy Tracking</p>
+        </div>
+        <button id="btn-close-validation-modal" class="btn-close-modal" aria-label="Close Validation Report">✕</button>
+      </div>
+
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div class="guide-intro">
+          This validation report audits the 26 replacement routes against architectural records and flags discrepancies that require physical campus survey confirmation. No unverified paths or guessed routes are generated.
+        </div>
+
+        <h4 style="margin-top: 1rem; color: var(--color-navy); font-size: 0.95rem;">Part C Audit Items</h4>
+        <table class="validation-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Routes</th>
+              <th>Summary</th>
+              <th>Validation Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>VAL-1</strong></td>
+              <td>Route 3, 4</td>
+              <td>E103-I & E103-II (Ground Floor Mechatronics & Design labs) maintained strictly distinct from 2nd Floor E303-I/II.</td>
+              <td><span class="badge-status verified">✓ Distinct (Resolved)</span></td>
+            </tr>
+            <tr>
+              <td><strong>VAL-2</strong></td>
+              <td>Route 6</td>
+              <td>Data Conflict: Destination is E106-II, but step 3 identifies room as E106-I. Flagged for review; mapping kept unresolved.</td>
+              <td><span class="badge-status needs-confirmation">⚠️ Needs Confirmation</span></td>
+            </tr>
+            <tr>
+              <td><strong>VAL-3</strong></td>
+              <td>Route 25, 26</td>
+              <td>E401 & E402 designated as Computer Engg on 3rd floor, but 400-series numbering suggests level mismatch. Marked for review.</td>
+              <td><span class="badge-status needs-confirmation">⚠️ Needs Confirmation</span></td>
+            </tr>
+            <tr>
+              <td><strong>VAL-4</strong></td>
+              <td>Routes 9–24</td>
+              <td>Main staircase left of lobby (near Ganesh statue) connects Ground Floor to 1st Floor (Mechanical) and 2nd Floor (Computer).</td>
+              <td><span class="badge-status verified">✓ Verified</span></td>
+            </tr>
+            <tr>
+              <td><strong>VAL-5</strong></td>
+              <td>Routes 3–8, 11–16, 19–24</td>
+              <td>Department Boards (Mechanical & Computer) verified as hallway waypoints. Sub-room door order sequence mapped.</td>
+              <td><span class="badge-status survey-pending">📐 Survey Pending</span></td>
+            </tr>
+            <tr>
+              <td><strong>VAL-6</strong></td>
+              <td>All 26 Routes</td>
+              <td>Selected destination room code strictly matches displayed room label, map pin, directions, and audio readout.</td>
+              <td><span class="badge-status verified">✓ Synchronized</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top: 1.25rem; color: var(--color-navy); font-size: 0.95rem;">Test Any of the 26 Verified Routes (1-Click Load)</h4>
+        <p style="font-size: 0.8rem; color: var(--color-muted); margin-bottom: 0.5rem;">Click any route button to load its turn-by-turn directions and floor map instantly:</p>
+        
+        <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.5rem;">Ground Floor — Mechanical Engineering (Routes 1–8):</div>
+        <div class="routes-quick-grid">
+          <button class="btn-route-pill" data-dest-id="E101">R1: E101</button>
+          <button class="btn-route-pill" data-dest-id="E102">R2: E102</button>
+          <button class="btn-route-pill" data-dest-id="E103-I">R3: E103-I</button>
+          <button class="btn-route-pill" data-dest-id="E103-II">R4: E103-II</button>
+          <button class="btn-route-pill" data-dest-id="E106-I">R5: E106-I</button>
+          <button class="btn-route-pill flagged" data-dest-id="E106-II" title="Flagged: Destination E106-II vs note E106-I">R6: E106-II ⚠️</button>
+          <button class="btn-route-pill" data-dest-id="E108-I">R7: E108-I</button>
+          <button class="btn-route-pill" data-dest-id="E108-II">R8: E108-II</button>
+        </div>
+
+        <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.75rem;">First Floor — Mechanical Engineering via Ganesh Statue Stairs (Routes 9–16):</div>
+        <div class="routes-quick-grid">
+          <button class="btn-route-pill" data-dest-id="E201">R9: E201</button>
+          <button class="btn-route-pill" data-dest-id="E202">R10: E202</button>
+          <button class="btn-route-pill" data-dest-id="E203-I">R11: E203-I</button>
+          <button class="btn-route-pill" data-dest-id="E203-II">R12: E203-II</button>
+          <button class="btn-route-pill" data-dest-id="E206-I">R13: E206-I</button>
+          <button class="btn-route-pill" data-dest-id="E206-II">R14: E206-II</button>
+          <button class="btn-route-pill" data-dest-id="E208-I">R15: E208-I</button>
+          <button class="btn-route-pill" data-dest-id="E208-II">R16: E208-II</button>
+        </div>
+
+        <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.75rem;">Second Floor — Computer Engineering via Ganesh Statue Stairs (Routes 17–24):</div>
+        <div class="routes-quick-grid">
+          <button class="btn-route-pill" data-dest-id="E301">R17: E301</button>
+          <button class="btn-route-pill" data-dest-id="E302">R18: E302</button>
+          <button class="btn-route-pill" data-dest-id="E303-I">R19: E303-I</button>
+          <button class="btn-route-pill" data-dest-id="E303-II">R20: E303-II</button>
+          <button class="btn-route-pill" data-dest-id="E306-I">R21: E306-I</button>
+          <button class="btn-route-pill" data-dest-id="E306-II">R22: E306-II</button>
+          <button class="btn-route-pill" data-dest-id="E308-I">R23: E308-I</button>
+          <button class="btn-route-pill" data-dest-id="E308-II">R24: E308-II</button>
+        </div>
+
+        <div style="font-size: 0.82rem; font-weight: 700; color: #475569; margin-top: 0.75rem;">Third Floor — Computer Engineering (Routes 25–29):</div>
+        <div class="routes-quick-grid">
+          <button class="btn-route-pill" data-dest-id="E401">R25: E401</button>
+          <button class="btn-route-pill" data-dest-id="E402">R26: E402</button>
+          <button class="btn-route-pill" data-dest-id="E403" data-variant="1">R27: E403 (R1)</button>
+          <button class="btn-route-pill" data-dest-id="E406">R28: E406</button>
+          <button class="btn-route-pill" data-dest-id="E403" data-variant="2">R29: E403 (R2)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">
+    <span id="toast-message">Route copied to clipboard!</span>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
