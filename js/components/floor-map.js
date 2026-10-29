@@ -88,6 +88,7 @@ export class FloorMap {
             id="campus-floor-svg" 
             class="campus-floor-svg" 
             viewBox="${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.w} ${this.viewBox.h}" 
+            preserveAspectRatio="xMidYMid meet"
             xmlns="http://www.w3.org/2000/svg"
             role="img"
             aria-label="KKWIEER Campus Indoor Interactive Map"
